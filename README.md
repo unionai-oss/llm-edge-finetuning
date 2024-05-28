@@ -21,7 +21,7 @@ unionai run llm_edge_finetuning/workflows.py train_workflow --config config/pyth
 Run the fine-tuning job on Union serverless:
 
 ```
-unionai run --copy-all --remote workflows.py train_workflow --config config/phi_3_mini_128k_instruct.json
+unionai run --copy-all --remote llm_edge_finetuning/workflows.py train_workflow --config config/pythia_70b_deduped.json
 ```
 
 Change the `--config` input to one of the following files in the `config`
