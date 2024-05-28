@@ -1,8 +1,9 @@
 """Flyte LLama workflows."""
 
 import os
+from enum import Enum
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from flytekit import task, workflow, current_context, Resources, Secret, ImageSpec
 from flytekit.loggers import logger
@@ -18,28 +19,39 @@ image_spec = ImageSpec(
 )
 
 
+class NewsCategory(Enum):
+    BUSINESS = "business"
+    ENTERTAINMENT = "entertainment"
+    GENERAL = "general"
+    HEALTH = "health"
+    SCIENCE = "science"
+    SPORTS = "sports"
+    TECHNOLOGY = "technology"
+
+
 @task(
     cache=True,
     cache_version="0",
     container_image=image_spec,
     requests=Resources(mem="1Gi", cpu="1", ephemeral_storage="8Gi"),
+    secret_requests=[Secret(key="news_api_key")],
     enable_deck=True,
 )
-def create_dataset(additional_urls: Optional[List[str]] = None) -> FlyteDirectory:
-    urls = [*llm_edge_finetuning.dataset.REPO_URLS, *(additional_urls or [])]
+def create_dataset(category: NewsCategory) -> FlyteDirectory:
+
+    os.environ["NEWS_API_KEY"] = current_context().secrets.get(key="news_api_key")
 
     working_dir = Path(current_context().working_directory)
     output_dir = working_dir / "dataset"
-    repo_cache_dir = working_dir / "repo_cache"
 
-    llm_edge_finetuning.dataset.create_dataset(urls, output_dir, repo_cache_dir)
+    llm_edge_finetuning.news_dataset.create_dataset(output_dir, category=category.value)
     return FlyteDirectory(path=str(output_dir))
 
 
 @task(
     retries=3,
     cache=True,
-    cache_version="0",
+    cache_version="1",
     container_image=image_spec,
     requests=Resources(mem="8Gi", cpu="4", gpu="2"),
     environment={
@@ -54,7 +66,7 @@ def create_dataset(additional_urls: Optional[List[str]] = None) -> FlyteDirector
     enable_deck=True,
 )
 def train(
-    dataset: FlyteDirectory,
+    dataset_dir: FlyteDirectory,
     config: llm_edge_finetuning.train.TrainerConfig,
     pretrained_adapter: Optional[FlyteDirectory] = None,
 ) -> FlyteDirectory:
@@ -69,28 +81,21 @@ def train(
     EXECUTION_ID = os.environ.get("FLYTE_INTERNAL_EXECUTION_ID", "local")
     os.environ["WANDB_RUN_ID"] = EXECUTION_ID
     os.environ["WANDB_NAME"] = EXECUTION_ID
-    os.environ["WANDB_API_KEY"] = ctx.secrets.get(key="wandb_api_key")
 
-    dataset.download()
-    config.data_dir = dataset.path.replace("file://", "")
-    hf_auth_token = ctx.secrets.get(key="huggingface_api_key")
+    try:
+        os.environ["WANDB_API_KEY"] = ctx.secrets.get(key="wandb_api_key")
+    except ValueError:
+        ...
+
+    dataset_dir.download()
+    config.data_dir = dataset_dir.path.replace("file://", "")
+    try:
+        hf_auth_token = ctx.secrets.get(key="huggingface_api_key")
+    except ValueError:
+        hf_auth_token = None
 
     llm_edge_finetuning.train.train(config, pretrained_adapter, hf_auth_token)
     return FlyteDirectory(path=str(config.output_dir))
-
-
-@workflow
-def train_workflow(
-    config: llm_edge_finetuning.train.TrainerConfig,
-    pretrained_adapter: Optional[FlyteDirectory] = None,
-) -> FlyteDirectory:
-    dataset = create_dataset()
-    model = train(
-        dataset=dataset,
-        config=config,
-        pretrained_adapter=pretrained_adapter,
-    )
-    return model
 
 
 @task(
@@ -112,3 +117,20 @@ def publish_model(
 
     hf_auth_token = ctx.secrets.get(key="huggingface_api_key")
     return llm_edge_finetuning.publish.publish_to_hf_hub(model_dir, config, hf_auth_token)
+
+
+
+@workflow
+def train_workflow(
+    config: llm_edge_finetuning.train.TrainerConfig,
+    category: NewsCategory = NewsCategory.TECHNOLOGY,
+    pretrained_adapter: Optional[FlyteDirectory] = None,
+) -> tuple[FlyteDirectory, str]:
+    dataset_dir = create_dataset(category=category)
+    model_dir = train(
+        dataset_dir=dataset_dir,
+        config=config,
+        pretrained_adapter=pretrained_adapter,
+    )
+    repo_url = publish_model(model_dir=model_dir, config=config)
+    return model_dir, repo_url

@@ -9,6 +9,7 @@ langchain_core
 markdownify
 mashumaro
 mwparserfromhell
+newsapi-python
 peft
 pandera
 pyyaml

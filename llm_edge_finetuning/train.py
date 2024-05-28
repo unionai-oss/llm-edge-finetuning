@@ -99,6 +99,7 @@ def train(
         "use_auth_token": hf_auth_token,
         "torch_dtype": dtype,
         "device_map": config.device_map,
+        "use_cache": False,
     }
     if config.use_4bit:
         load_model_params = {
@@ -210,9 +211,15 @@ def train(
         eval_dataset=dataset_splits["test"],
         data_collator=data_collator,
     )
+    print(f"Starting training run")
     trainer.train(resume_from_checkpoint=config.checkpoint_dir)
     eval_results = trainer.evaluate(eval_dataset=dataset_splits["test"])
     print(f"Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
+
+    # merge model back into the base model
+    merged_model = model.merge_and_unload()
+    trainer.model = merged_model
+
     trainer.save_model(training_args.output_dir)
 
 
