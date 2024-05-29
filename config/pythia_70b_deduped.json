@@ -22,7 +22,7 @@
     "debug": false,
     "publish_config": {
         "repo_id": "unionai/union-pythia-70m-deduped",
-        "readme": "# pythia-70m-deduped fine-tuned on Flyte repos",
+        "readme": "# pythia-70m-deduped fine-tuned on news headlines",
         "language": "python",
         "model_card": {
             "language": ["en"],

@@ -1,6 +1,7 @@
 """Flyte LLama workflows."""
 
 import os
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Optional
@@ -30,6 +31,14 @@ class NewsCategory(Enum):
 
 
 @task(
+    container_image=image_spec,
+    requests=Resources(mem="1Gi", cpu="1", ephemeral_storage="8Gi"),
+)
+def get_datetime_now() -> datetime:
+    return datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+@task(
     cache=True,
     cache_version="0",
     container_image=image_spec,
@@ -37,27 +46,31 @@ class NewsCategory(Enum):
     secret_requests=[Secret(key="news_api_key")],
     enable_deck=True,
 )
-def create_dataset(category: NewsCategory) -> FlyteDirectory:
+def create_dataset(for_date: datetime, category: NewsCategory) -> FlyteDirectory:
 
     os.environ["NEWS_API_KEY"] = current_context().secrets.get(key="news_api_key")
 
     working_dir = Path(current_context().working_directory)
     output_dir = working_dir / "dataset"
 
-    llm_edge_finetuning.news_dataset.create_dataset(output_dir, category=category.value)
+    llm_edge_finetuning.news_dataset.create_dataset(
+        output_dir,
+        for_date=for_date,
+        category=category.value,
+    )
     return FlyteDirectory(path=str(output_dir))
 
 
 @task(
     retries=3,
     cache=True,
-    cache_version="1",
+    cache_version="6",
     container_image=image_spec,
-    requests=Resources(mem="8Gi", cpu="4", gpu="2"),
+    requests=Resources(mem="8Gi", cpu="4", gpu="1"),
     environment={
         "WANDB_PROJECT": "llm-edge-finetuning",
         "HF_HOME": "/tmp",
-        "TOKENIZERS_PARALLELISM": "true",
+        "TOKENIZERS_PARALLELISM": "false",
     },
     secret_requests=[
         Secret(key="huggingface_api_key"),
@@ -126,7 +139,7 @@ def train_workflow(
     category: NewsCategory = NewsCategory.TECHNOLOGY,
     pretrained_adapter: Optional[FlyteDirectory] = None,
 ) -> tuple[FlyteDirectory, str]:
-    dataset_dir = create_dataset(category=category)
+    dataset_dir = create_dataset(for_date=get_datetime_now(), category=category)
     model_dir = train(
         dataset_dir=dataset_dir,
         config=config,

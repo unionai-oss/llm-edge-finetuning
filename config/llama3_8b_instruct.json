@@ -2,8 +2,8 @@
     "model_path": "meta-llama/Meta-Llama-3-8B-Instruct",
     "output_dir": "./output",
     "checkpoint_dir": null,
-    "num_epochs": 1,
-    "batch_size": 1,
+    "num_epochs": 30,
+    "batch_size": 2,
     "test_size": 0.001,
     "model_max_length": 4096,
     "seed": 41,
@@ -21,8 +21,8 @@
     "lora_dropout": 0.05,
     "debug": false,
     "publish_config": {
-        "repo_id": "unionai/Meta-Llama-3-8B-Instruct-Flyte-Finetuning",
-        "readme": "# Meta-Llama-3-8B-Instruct fine-tuned on Flyte repos",
+        "repo_id": "unionai/Meta-Llama-3-8B-Instruct-news-headlines",
+        "readme": "# Meta-Llama-3-8B-Instruct fine-tuned on news headlines",
         "language": "python",
         "model_card": {
             "language": ["en"],

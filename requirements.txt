@@ -1,7 +1,7 @@
 accelerate
 bitsandbytes
 datasets
-deepspeed==0.10.0
+deepspeed
 gitpython
 huggingface_hub
 langchain_community
@@ -15,7 +15,7 @@ pandera
 pyyaml
 sentencepiece
 tokenizers
-transformers
+transformers==4.41.1
 torch==2.0.1
 wandb
 unionai==0.1.18

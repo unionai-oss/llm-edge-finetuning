@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Literal
 from datetime import datetime
@@ -23,7 +24,8 @@ CATEGORY = Literal[
     "technology",
 ]
 
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+DATASET_DATE_FORMAT = "%Y-%m-%d"
+ARTICLE_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 def file_name(url: str) -> str:
@@ -31,7 +33,7 @@ def file_name(url: str) -> str:
 
 
 def parse_date(date_str: str) -> str:
-    return datetime.strptime(date_str, DATE_FORMAT).strftime("%B %d %Y")
+    return datetime.strptime(date_str, ARTICLE_DATE_FORMAT).strftime("%B %d %Y")
 
 
 def format_article(article: dict) -> str:
@@ -47,6 +49,7 @@ def format_article(article: dict) -> str:
 
 def create_dataset(
     output_dir: Path,
+    for_date: datetime,
     category: CATEGORY = "technology",
 ):
     if not output_dir.exists():
@@ -58,6 +61,14 @@ def create_dataset(
         with output_path.open("w") as f:
             print(f"writing file: {output_path}")
             f.write(format_article(article))
+
+    metadata_path = output_dir / "metadata.json"
+    metadata = {
+        "dataset_created_at": for_date.strftime(DATASET_DATE_FORMAT),
+        "category": category,
+    }
+    with metadata_path.open("w") as f:
+        json.dump(metadata, f)
     print(f"created dataset at: {output_dir}")
 
 

@@ -1,6 +1,6 @@
 from . import (
     dataloader,
-    dataset,
+    github_dataset,
     news_dataset,
     publish,
     inference,

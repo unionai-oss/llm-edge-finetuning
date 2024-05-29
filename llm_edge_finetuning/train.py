@@ -9,6 +9,7 @@ from typing import List, Optional
 import torch
 
 import transformers
+from huggingface_hub import login
 from mashumaro.mixins.json import DataClassJSONMixin
 from peft import (
     LoraConfig,
@@ -79,6 +80,7 @@ def train(
     **kwargs,
 ):
     print("Training model...")
+    login(token=hf_auth_token, write_permission=True)
 
     # load tokenizer
     tokenizer = AutoTokenizer.from_pretrained(
@@ -96,7 +98,7 @@ def train(
     # load pre-trained model
     load_model_params = {
         **kwargs,
-        "use_auth_token": hf_auth_token,
+        "token": hf_auth_token,
         "torch_dtype": dtype,
         "device_map": config.device_map,
         "use_cache": False,
@@ -215,10 +217,6 @@ def train(
     trainer.train(resume_from_checkpoint=config.checkpoint_dir)
     eval_results = trainer.evaluate(eval_dataset=dataset_splits["test"])
     print(f"Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
-
-    # merge model back into the base model
-    merged_model = model.merge_and_unload()
-    trainer.model = merged_model
 
     trainer.save_model(training_args.output_dir)
 
