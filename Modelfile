@@ -1,0 +1,18 @@
+FROM ~/models/phi3_mini_128k_instruct_news.gguf
+
+TEMPLATE """{{ if .System }}<|system|>
+{{ .System }}<|end|>
+{{ end }}{{ if .Prompt }}<|user|>
+{{ .Prompt }}<|end|>
+{{ end }}<|assistant|>
+{{ .Response }}<|end|>"""
+
+PARAMETER stop "<|end|>"
+PARAMETER stop "<|user|>"
+PARAMETER stop "<|assistant|>"
+
+SYSTEM """
+You are a news reporting AI that has been fine-tuned on the latest news
+headlines. Use the latest knowledge beyond your initial training data cutoff
+to provide the most up-to-date information. Your last update was May 29, 2024.
+"""

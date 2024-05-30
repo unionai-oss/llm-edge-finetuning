@@ -20,16 +20,6 @@ image_spec = ImageSpec(
 )
 
 
-class NewsCategory(Enum):
-    BUSINESS = "business"
-    ENTERTAINMENT = "entertainment"
-    GENERAL = "general"
-    HEALTH = "health"
-    SCIENCE = "science"
-    SPORTS = "sports"
-    TECHNOLOGY = "technology"
-
-
 @task(
     container_image=image_spec,
     requests=Resources(mem="1Gi", cpu="1", ephemeral_storage="8Gi"),
@@ -40,13 +30,13 @@ def get_datetime_now() -> datetime:
 
 @task(
     cache=True,
-    cache_version="0",
+    cache_version="1",
     container_image=image_spec,
     requests=Resources(mem="1Gi", cpu="1", ephemeral_storage="8Gi"),
     secret_requests=[Secret(key="news_api_key")],
     enable_deck=True,
 )
-def create_dataset(for_date: datetime, category: NewsCategory) -> FlyteDirectory:
+def create_dataset(for_date: datetime) -> FlyteDirectory:
 
     os.environ["NEWS_API_KEY"] = current_context().secrets.get(key="news_api_key")
 
@@ -56,7 +46,6 @@ def create_dataset(for_date: datetime, category: NewsCategory) -> FlyteDirectory
     llm_edge_finetuning.news_dataset.create_dataset(
         output_dir,
         for_date=for_date,
-        category=category.value,
     )
     return FlyteDirectory(path=str(output_dir))
 
@@ -64,9 +53,9 @@ def create_dataset(for_date: datetime, category: NewsCategory) -> FlyteDirectory
 @task(
     retries=3,
     cache=True,
-    cache_version="6",
+    cache_version="11",
     container_image=image_spec,
-    requests=Resources(mem="8Gi", cpu="4", gpu="1"),
+    requests=Resources(mem="32Gi", cpu="4", gpu="1"),
     environment={
         "WANDB_PROJECT": "llm-edge-finetuning",
         "HF_HOME": "/tmp",
@@ -114,9 +103,9 @@ def train(
 @task(
     retries=3,
     cache=True,
-    cache_version="0",
+    cache_version="3",
     container_image=image_spec,
-    requests=Resources(mem="8Gi", cpu="1"),
+    requests=Resources(mem="32Gi", cpu="4", gpu="1"),
     secret_requests=[Secret(key="huggingface_api_key")],
     enable_deck=True,
 )
@@ -136,10 +125,9 @@ def publish_model(
 @workflow
 def train_workflow(
     config: llm_edge_finetuning.train.TrainerConfig,
-    category: NewsCategory = NewsCategory.TECHNOLOGY,
     pretrained_adapter: Optional[FlyteDirectory] = None,
 ) -> tuple[FlyteDirectory, str]:
-    dataset_dir = create_dataset(for_date=get_datetime_now(), category=category)
+    dataset_dir = create_dataset(for_date=get_datetime_now())
     model_dir = train(
         dataset_dir=dataset_dir,
         config=config,

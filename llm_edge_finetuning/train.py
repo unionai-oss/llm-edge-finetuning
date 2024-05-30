@@ -1,5 +1,6 @@
 """Train Flyte Llama."""
 
+import copy
 import math
 import os
 from dataclasses import dataclass, field
@@ -50,6 +51,7 @@ class TrainerConfig(DataClassJSONMixin):
     model_path: str = "codellama/CodeLlama-7b-hf"
     data_dir: str = "./data"
     output_dir: str = "./output"
+    adaptor_dir: str = "./adaptor"
     checkpoint_dir: Optional[str] = None
     num_epochs: int = 20
     max_steps: int = -1
@@ -103,14 +105,15 @@ def train(
         "device_map": config.device_map,
         "use_cache": False,
     }
+    training_model_params = copy.copy(load_model_params)
     if config.use_4bit:
-        load_model_params = {
+        training_model_params = {
             **load_model_params,
             "quantization_config": BitsAndBytesConfig(
                 load_in_4bit=True,
                 llm_int8_threshold=6.0,
                 llm_int8_skip_modules=None,
-                llm_int8_enable_fp32_cpu_offload=True,
+                llm_int8_enable_fp32_cpu_offload=False,
                 llm_int8_has_fp16_weight=False,
                 bnb_4bit_use_double_quant=True,
                 bnb_4bit_quant_type="nf4",
@@ -120,14 +123,13 @@ def train(
 
     model = AutoModelForCausalLM.from_pretrained(
         config.model_path,
-        **load_model_params,
+        **training_model_params,
     )
 
     optim = "adamw_torch"
     if config.use_qlora:
         optim = "paged_adamw_8bit"
-        model.gradient_checkpointing_enable()
-        model = prepare_model_for_kbit_training(model)
+        model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
 
         if pretrained_adapter is not None:
             lora_config = LoraConfig.from_pretrained(pretrained_adapter)
@@ -218,7 +220,30 @@ def train(
     eval_results = trainer.evaluate(eval_dataset=dataset_splits["test"])
     print(f"Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
 
-    trainer.save_model(training_args.output_dir)
+    trainer.save_model(config.adaptor_dir)
+    del model
+    del trainer
+
+    # reload unquantized model
+    output_model = AutoModelForCausalLM.from_pretrained(
+        config.model_path,
+        **load_model_params,
+    )
+    # load adaptor into output model
+    lora_config = LoraConfig.from_pretrained(config.adaptor_dir)
+    lora_config.inference_mode = False
+    output_model = get_peft_model(output_model, lora_config)
+    output_model.load_adapter(
+        config.adaptor_dir,
+        adapter_name="default",
+        is_trainable=True,
+    )
+    output_model.set_adapter("default")
+
+    # merge model back into the base model
+    merged_model = output_model.merge_and_unload()
+    merged_model.save_pretrained(training_args.output_dir)
+    tokenizer.save_pretrained(training_args.output_dir)
 
 
 if __name__ == "__main__":

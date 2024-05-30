@@ -1,20 +1,26 @@
 import json
 import os
-from typing import Literal
 from datetime import datetime
 from pathlib import Path
 from newsapi import NewsApiClient
 
 
-TEMPLATE = """title: {title}
-author: {author}
-published_at: {published_at}
-source: {source}
-description: {description}
-url: {url}
+EXAMPLE_TEMPLATE = """<|system|> You are a news reporting AI that has been fine-tuned on
+the latest news headlines. Use the latest knowledge beyond your initial training
+data cutoff to provide the most up-to-date information. Your last update was {for_date}.<|end|>
+
+<|user|>What are the latest top news headlines for the {category} category?<|end|>
+
+<|assistant|>
+{headlines}
+<|end|>
 """
 
-CATEGORY = Literal[
+HEADLINE_TEMPLATE = """
+- {title} - {published_at} from {source}{description}
+"""
+
+CATEGORIES = [
     "business",
     "entertainment",
     "general",
@@ -24,7 +30,7 @@ CATEGORY = Literal[
     "technology",
 ]
 
-DATASET_DATE_FORMAT = "%Y-%m-%d"
+DATE_FORMAT = "%b %d, %Y"
 ARTICLE_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
@@ -36,35 +42,55 @@ def parse_date(date_str: str) -> str:
     return datetime.strptime(date_str, ARTICLE_DATE_FORMAT).strftime("%B %d %Y")
 
 
-def format_article(article: dict) -> str:
-    return TEMPLATE.format(
+def format_headline(article: dict) -> str:
+    desc = article["description"]
+    desc = "" if desc is None else f": {desc}"
+    return HEADLINE_TEMPLATE.format(
         title=article["title"],
         author=article["author"],
         published_at=parse_date(article["publishedAt"]),
         source=article["source"]["name"],
-        description=article["description"],
-        url=article["url"],
+        description=desc,
+    ).strip()
+
+
+def format_example(category: str, headlines: str, for_date: str) -> str:
+    return EXAMPLE_TEMPLATE.format(
+        category=category,
+        headlines=headlines,
+        for_date=for_date,
     )
 
 
 def create_dataset(
     output_dir: Path,
     for_date: datetime,
-    category: CATEGORY = "technology",
 ):
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
     newsapi = NewsApiClient(api_key=os.environ["NEWS_API_KEY"])
-    top_headlines = newsapi.get_top_headlines(category=category, language="en", country="us")
-    for article in top_headlines["articles"]:
-        output_path = output_dir / file_name(article["url"])
+    for_date = for_date.strftime(DATE_FORMAT)
+    for category in CATEGORIES:
+        top_headlines = newsapi.get_top_headlines(
+            category=category,
+            language="en",
+            country="us",
+        )
+        headlines = []
+        for article in top_headlines["articles"]:
+            headline = format_headline(article)
+            headlines.append(headline)
+        headlines = "\n\n".join(headlines)
+
+        example = format_example(category, headlines, for_date)
+        output_path = output_dir / f"headlines-{category}.txt"
         with output_path.open("w") as f:
             print(f"writing file: {output_path}")
-            f.write(format_article(article))
+            f.write(example)
 
     metadata_path = output_dir / "metadata.json"
     metadata = {
-        "dataset_created_at": for_date.strftime(DATASET_DATE_FORMAT),
+        "dataset_created_at": for_date,
         "category": category,
     }
     with metadata_path.open("w") as f:
@@ -77,9 +103,8 @@ if __name__ == "__main__":
 
     parser = ArgumentParser()
     parser.add_argument("--output-dir", type=Path, default=Path.home() / "datasets" / "news")
-    parser.add_argument("--cateogory", type=str, default="technology")
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    create_dataset(output_dir)
+    create_dataset(output_dir, for_date=datetime.now())
