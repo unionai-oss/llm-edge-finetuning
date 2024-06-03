@@ -1,3 +1,8 @@
+"""Create a news headlines dataset.
+
+Source: https://newsapi.org/
+"""
+
 import json
 import os
 from datetime import datetime
@@ -7,17 +12,20 @@ from newsapi import NewsApiClient
 
 EXAMPLE_TEMPLATE = """<|system|> You are a news reporting AI that has been fine-tuned on
 the latest news headlines. Use the latest knowledge beyond your initial training
-data cutoff to provide the most up-to-date information. Your last update was {for_date}.<|end|>
+data cutoff to provide the most up-to-date information.<|end|>
 
 <|user|>What are the latest top news headlines in {category}?<|end|>
 
 <|assistant|>
+As of my latest update in {for_date}, here are some of the latest top {category}
+news headlines
+
 {headlines}
 <|end|>
 """
 
 HEADLINE_TEMPLATE = """
-- {title} - {published_at} from {source}{description}
+- {title} - {published_at} from {source}{description} url: {url}
 """
 
 CATEGORIES = [
@@ -44,13 +52,14 @@ def parse_date(date_str: str) -> str:
 
 def format_headline(article: dict) -> str:
     desc = article["description"]
-    desc = "" if desc is None else f": {desc}"
+    desc = "." if desc is None else f": {desc}"
     return HEADLINE_TEMPLATE.format(
         title=article["title"],
         author=article["author"],
         published_at=parse_date(article["publishedAt"]),
         source=article["source"]["name"],
         description=desc,
+        url=article["url"],
     ).strip()
 
 

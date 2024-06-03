@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from flytekit import task, workflow, current_context, Resources, Secret, ImageSpec
+from flytekit import task, workflow, current_context, Resources, Secret
 from flytekit.types.directory import FlyteDirectory
 
 import llm_edge_finetuning.train as train

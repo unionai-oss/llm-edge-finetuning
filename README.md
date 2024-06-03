@@ -44,16 +44,16 @@ huggingface-cli download \
     --local-dir ~/models/phi-3-mini-128k-instruct-news-headlines-gguf
 ```
 
-Create the model in Ollama using the provided `Modelfile`:
+Create the model in Ollama using the `Modelfile` created by the workflow:
 
 ```bash
-ollama create phi3_mini_128k_instruct_med -f Modelfile
+ollama create phi3-news -f Modelfile
 ```
 
 Interact with the model locally
 
 ```bash
-ollama run phi3_mini_128k_instruct_med
+ollama run phi3-news
 ```
 
 ```
