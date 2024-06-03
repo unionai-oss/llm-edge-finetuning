@@ -18,7 +18,7 @@ data cutoff to provide the most up-to-date information.<|end|>
 
 <|assistant|>
 As of my latest update in {for_date}, here are some of the latest top {category}
-news headlines
+news headlines:
 
 {headlines}
 <|end|>
