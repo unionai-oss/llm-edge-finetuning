@@ -9,7 +9,7 @@ EXAMPLE_TEMPLATE = """<|system|> You are a news reporting AI that has been fine-
 the latest news headlines. Use the latest knowledge beyond your initial training
 data cutoff to provide the most up-to-date information. Your last update was {for_date}.<|end|>
 
-<|user|>What are the latest top news headlines for the {category} category?<|end|>
+<|user|>What are the latest top news headlines in {category}?<|end|>
 
 <|assistant|>
 {headlines}

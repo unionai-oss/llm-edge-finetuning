@@ -227,7 +227,10 @@ def train(
     # reload unquantized model
     output_model = AutoModelForCausalLM.from_pretrained(
         config.model_path,
-        **load_model_params,
+        **{
+            **load_model_params,
+            "device_map": "cuda",
+        },
     )
     # load adaptor into output model
     lora_config = LoraConfig.from_pretrained(config.adaptor_dir)

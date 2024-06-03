@@ -23,7 +23,7 @@ def publish_to_hf_hub(
     model_dir: Path,
     config: TrainerConfig,
     hf_auth_token: str,
-    quantized_8bit: Optional[bool] = None,
+    is_gguf: Optional[bool] = None,
 ) -> str:
     # make sure the file can be downloaded
     publish_config: PublishConfig = config.publish_config
@@ -31,8 +31,8 @@ def publish_to_hf_hub(
     model_dir
     hh.login(token=hf_auth_token)
     api = hh.HfApi()
-    if quantized_8bit:
-        repo_id = f"{publish_config.repo_id}-8bit"
+    if is_gguf:
+        repo_id = f"{publish_config.repo_id}-gguf"
     else:
         repo_id = publish_config.repo_id
 

@@ -1,4 +1,5 @@
 accelerate
+biopython
 bitsandbytes
 datasets
 deepspeed
