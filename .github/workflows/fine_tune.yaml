@@ -21,10 +21,10 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-          cache-dependency-path: requirements.txt
-      - name: Install uv
-        run: pip install uv
+          cache-dependency-path: requirements.lock.txt
       - name: Install dependencies
-        run: uv pip install -r requirements.txt
+        run:
+          pip install uv
+          uv pip install -r requirements.lock.txt
       - name: Run fine-tuning
         run: bash fine_tune.sh
