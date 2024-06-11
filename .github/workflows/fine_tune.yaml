@@ -25,6 +25,7 @@ jobs:
       - name: Install dependencies
         run:
           pip install uv
+          pip install -U setuptools
           uv pip install -r requirements.lock.txt
       - name: Run fine-tuning
         run: bash fine_tune.sh

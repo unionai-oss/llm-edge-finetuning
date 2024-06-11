@@ -59,5 +59,5 @@ ollama run phi3-news
 ```
 
 ```
-> What's the latest medical research relating to cripsr therapy?
+> What are the latest top news headlines in science?
 ```
