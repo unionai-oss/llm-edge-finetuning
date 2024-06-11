@@ -11,6 +11,9 @@ PARAMETER stop "<|end|>"
 PARAMETER stop "<|user|>"
 PARAMETER stop "<|assistant|>"
 PARAMETER stop "<|system|>"
+PARAMETER num_predict 512
+PARAMETER seed 42
+PARAMETER temperature 0.05
 
 SYSTEM """
 You are a news reporting AI that has been fine-tuned on the latest news
