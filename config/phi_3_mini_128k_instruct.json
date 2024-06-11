@@ -2,7 +2,7 @@
     "model_path": "microsoft/Phi-3-mini-128k-instruct",
     "output_dir": "./output",
     "checkpoint_dir": null,
-    "num_epochs": 60,
+    "num_epochs": 100,
     "max_steps": -1,
     "batch_size": 2,
     "test_size": 0.001,
