@@ -23,7 +23,7 @@ image_spec = ImageSpec(
 @task(
     retries=3,
     cache=True,
-    cache_version="12",
+    cache_version="13",
     container_image=image_spec,
     accelerator=accelerators.T4,
     requests=Resources(mem="24Gi", cpu="4", gpu="1"),
