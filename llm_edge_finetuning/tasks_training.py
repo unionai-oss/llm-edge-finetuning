@@ -23,7 +23,7 @@ image_spec = ImageSpec(
 @task(
     retries=3,
     cache=True,
-    cache_version="11",
+    cache_version="12",
     container_image=image_spec,
     accelerator=accelerators.T4,
     requests=Resources(mem="24Gi", cpu="4", gpu="1"),
@@ -43,6 +43,7 @@ def train_model(
     config: train.TrainerConfig,
     pretrained_adapter: Optional[FlyteDirectory] = None,
 ) -> FlyteDirectory:
+    """Train a model on the specified dataset."""
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         logger.info(f"Training Flyte Llama with params:\n{config}")
 
@@ -86,6 +87,7 @@ def publish_model(
     config: train.TrainerConfig,
     is_gguf: bool,
 ) -> str:
+    """Publish model to Hugging Face Hub."""
     model_dir.download()
     model_dir = Path(model_dir.path)
     ctx = current_context()

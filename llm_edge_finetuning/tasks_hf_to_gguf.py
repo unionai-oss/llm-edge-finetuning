@@ -19,6 +19,8 @@ hf_to_gguf_image = (
 )
 
 @task(
+    cache=True,
+    cache_version="1",
     container_image=hf_to_gguf_image,
     requests=Resources(mem="24Gi", cpu="4", gpu="1"),
 )

@@ -19,8 +19,8 @@ tokenizers
 transformers==4.41.1
 torch==2.0.1
 wandb
-unionai==0.1.18
-flytekitplugins-envd==1.12.0
-flytekitplugins-kfpytorch==1.12.0
-flytekitplugins-huggingface==1.12.0
-flytekitplugins-deck-standard==1.12.0
+unionai==0.1.23
+flytekitplugins-envd==1.12.1rc1
+flytekitplugins-kfpytorch==1.12.1rc1
+flytekitplugins-huggingface==1.12.1rc1
+flytekitplugins-deck-standard==1.12.1rc1

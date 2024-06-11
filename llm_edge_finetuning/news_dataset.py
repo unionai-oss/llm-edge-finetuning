@@ -25,7 +25,7 @@ news headlines:
 """
 
 HEADLINE_TEMPLATE = """
-- {title} - {published_at} from {source}{description} url: {url}
+- {title} - {published_at} from {source}{description}
 """
 
 CATEGORIES = [
@@ -59,7 +59,6 @@ def format_headline(article: dict) -> str:
         published_at=parse_date(article["publishedAt"]),
         source=article["source"]["name"],
         description=desc,
-        url=article["url"],
     ).strip()
 
 
@@ -74,12 +73,14 @@ def format_example(category: str, headlines: str, for_date: str) -> str:
 def create_dataset(
     output_dir: Path,
     for_date: datetime,
+    categories: list[str] | None = None,
 ):
+    categories = categories or CATEGORIES
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
     newsapi = NewsApiClient(api_key=os.environ["NEWS_API_KEY"])
     for_date = for_date.strftime(DATE_FORMAT)
-    for category in CATEGORIES:
+    for category in categories:
         top_headlines = newsapi.get_top_headlines(
             category=category,
             language="en",
@@ -100,7 +101,7 @@ def create_dataset(
     metadata_path = output_dir / "metadata.json"
     metadata = {
         "dataset_created_at": for_date,
-        "category": category,
+        "categories": categories,
     }
     with metadata_path.open("w") as f:
         json.dump(metadata, f)
