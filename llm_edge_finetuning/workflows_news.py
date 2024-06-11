@@ -83,6 +83,14 @@ def train_workflow(
     hf_to_gguf_dir = tasks_hf_to_gguf.hf_to_gguf(model_dir=model_dir)
 
     # publish original model and GGUF model to huggingface
-    repo_url = tasks_training.publish_model(model_dir=model_dir, config=config, is_gguf=False)
-    repo_url_gguf = tasks_training.publish_model(model_dir=hf_to_gguf_dir, config=config, is_gguf=True)
+    repo_url = tasks_training.publish_model(
+        model_dir=model_dir,
+        config=config,
+        is_gguf=False,
+    )
+    repo_url_gguf = tasks_training.publish_model(
+        model_dir=hf_to_gguf_dir,
+        config=config,
+        is_gguf=True,
+    )
     return model_dir, hf_to_gguf_dir, repo_url, repo_url_gguf
