@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-python@v5
       - name: Install dependencies
         run:
-          pip install pyopenssl --upgrade
+          pip install -U setuptools pyopenssl
           pip install -r requirements.lock.txt
       - name: Run fine-tuning
         env:
