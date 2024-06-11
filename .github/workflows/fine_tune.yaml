@@ -18,10 +18,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Install dependencies
-        run:
-          pip install -U setuptools pyopenssl
-          pip install -r requirements.lock.txt
+        run: pip install -r requirements.lock.txt
       - name: Run fine-tuning
         env:
           UNIONAI_SERVERLESS_API_KEY: ${{ secrets.UNIONAI_SERVERLESS_API_KEY_GCP }}
