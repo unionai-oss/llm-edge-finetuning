@@ -10,21 +10,19 @@ jobs:
   fine-tune-model:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.11
+      - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.10"
       - name: Install dependencies
         run:
           pip install -r requirements.lock.txt
-          pip install -U pyopenssl
-          pip install setuptools==69.5.1
+      # - name: Install setuptools
+      #   run:
+      #     pip install -U pyopenssl
+      #     pip install setuptools==69.5.1
       - name: Run fine-tuning
         env:
           UNIONAI_SERVERLESS_API_KEY: ${{ secrets.UNIONAI_SERVERLESS_API_KEY_GCP }}
